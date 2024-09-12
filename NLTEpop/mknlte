@@ -1,0 +1,66 @@
+#!/bin/bash
+
+TLUS=$(cd ../ ; pwd)"/tl208sy54/tlusty_synspec/tlusty/tlusty.exe"
+
+# check data and data_atom links 
+[ ! -d data ] && ln -s ../tl208sy54/tlusty_synspec/tlusty/data ./ 
+[ ! -d data_atom ] && ln -s ../tl208sy54/data_atom ./
+
+VTB=$2
+
+# check tas file
+if [ ! -f tas ] ; then
+    echo "IOPTAB=1, IBINOP=0" > tas
+    echo "ND=70" >> tas
+    echo "IFMOL=1" >> tas
+    echo "IFIXMO=1" >> tas
+    echo "TMOLIM=8000" >> tas
+    echo "VTB=${VTB}" >> tas
+    echo "IELCOR=100" >> tas
+fi
+
+ff=$1
+atm=$(echo "${ff%.*}")
+NAME=$(echo $atm | awk -F/ '{print $NF}')
+echo $NAME
+
+# prepare .5 for the calculations
+
+cp $atm.77 fort.8
+cp $atm.5 tmp.5
+sed '/Zn/q' tmp.5 > fort.5
+sed -i.tmp 's/.*NATOMS.*/ 30     !NATOMS/' fort.5 ; rm fort.5.tmp
+awk '{if (NR>=6) $1=" 1"; print }' fort.5 > tmp.5 ; mv tmp.5 fort.5
+awk '{if (NR==6||NR==17||NR==25)  $1=" 2"; print }' fort.5 > tmp.5 ; mv tmp.5 fortl.5
+cat atfiles.5 >> fortl.5
+
+# link optable to absopac
+
+ln -sf $(cd ../ ; pwd)/OPTAB/$NAME.opt $(cd ../ ; pwd)/tl208sy54/tlusty_synspec/tlusty/data/absopac.dat
+
+
+#run LTE
+
+$TLUS < fortl.5 > ${NAME}_lte.log
+
+echo LTE calculations performed
+
+cp fort.7 ${NAME}_lte.7 
+mv fort.7 fort.8
+
+#run NLTE
+
+awk '{if (NR==6)  $1="-2"; print }' fortl.5 > tmp.5
+awk '{if (NR==2)  $1="F"; print }' tmp.5 > fortn.5
+
+$TLUS < fortn.5 > ${NAME}_nlte.log
+
+echo NLTE calculations performed
+cp fort.7 ${NAME}_MgCa.7
+
+rm fort.* data/absopac.dat
+echo DONE
+echo ${NAME}_MgCa.7 and _lte.7 have been created.
+
+
+

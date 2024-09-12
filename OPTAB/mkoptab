@@ -1,0 +1,65 @@
+#!/bin/bash
+
+SYNS=$(cd ../ ; pwd)"/tl208sy54/tlusty_synspec/synspec/synspec.exe"
+LLDIR=$(cd ../ ; pwd)"/tl208sy54/tlusty_synspec/linelist"
+
+# check data link 
+[ ! -d data ] && ln -s ../tl208sy54/tlusty_synspec/synspec/data ./ 
+
+# check linelists links (fort.19 and fort.20)
+
+[ ! -L fort.19 ] && ln -s $LLDIR/gfall08oct17hix.19 fort.19
+[ ! -L fort.20 ] && ln -s $LLDIR/kmol3_0.01_30.20 fort.20
+
+
+# check tas file
+if [ ! -f tas ] ; then
+    echo "IFMOL=1" > tas
+    echo "TMOLIM=8000" >> tas
+fi
+
+# check fort.55
+if [ ! -f fort.55 ] ; then
+    echo "      -3       1       0" > fort.55
+    echo "       1       0       0       0" >> fort.55 
+    echo "       0       0       0       0       0" >> fort.55 
+    echo "       1       0       0       0       0" >> fort.55 
+    echo "       2       0       0" >> fort.55 
+    echo "     900     -100000      50.0000    2000   0.00100000     0.120000" >> fort.55 
+    echo "      1      20" >> fort.55 
+fi
+
+# check fort.2
+if [ ! -f fort.2 ] ; then
+    echo "20  -2.000e+03      1.500e+04" > fort.2
+    echo "1 " >> fort.2
+    echo "10   1.000e-13      1.000e-05" >> fort.2     
+    echo "100000      0             900.        100000." >> fort.2
+    echo "'OPTFILE'       0" >> fort.2
+    echo "  1    0." >> fort.2 
+    echo " 12    0." >> fort.2
+    echo " 20    0." >> fort.2
+fi
+
+ff=$1
+atm=$(echo "${ff%.*}")
+
+cp $atm.77 fort.8
+cp $atm.5 fort.5
+
+NAME=$(echo $atm | awk -F/ '{print $NF}')
+
+echo $NAME
+echo opacity table is being created
+echo check $NAME.log to see progress 
+
+$SYNS < fort.5 > $NAME.log 
+
+mv OPTFILE $NAME.opt
+
+rm fort.* tas data
+echo DONE
+echo $NAME.opt has been created.
+
+
+

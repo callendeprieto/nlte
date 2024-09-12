@@ -1,0 +1,11 @@
+ATOM='data_atom'
+
+[ -d $ATOM ] && echo "Folder $ATOM is already downloaded" || wget --no-check-certificate https://owncloud.iac.es/index.php/s/ZnW0sPEoZ9ubzXJ/download -O $ATOM.zip
+
+KURMOD='EMPSyo2021'
+
+[ -d $KURMOD ] && echo "Folder $KURMOD is already downloaded" || wget --no-check-certificate https://owncloud.iac.es/index.php/s/mbzJ53P8ggXbZjf/download -O $KURMOD.zip
+
+SRC='tlusty_synspec'
+
+[ -d $SRC ] && echo "Folder $SRC is already downloaded" || wget --no-check-certificate https://owncloud.iac.es/index.php/s/n1lhitspKRB7QaQ/download -O $SRC.zip

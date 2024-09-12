@@ -1,0 +1,42 @@
+#!/bin/bash
+
+[ ! -d data_atom ] && ln -s ../tl208sy54/data_atom ./
+
+ff=$1
+atm=$(echo "${ff%.*}")
+NAME=$(echo $atm | awk -F/ '{print $NF}')
+
+cp $atm.5 fort.5
+
+sed '/! Es/q' fort.5  > ${NAME}_MgCa.5
+
+cat atfiles.5 >> ${NAME}_MgCa.5
+cp ../NLTEpop/${NAME}_MgCa.7 ./
+
+
+# check tas file
+if [ ! -f tas ] ; then
+	if [ -z "$2" ] ; then 
+	touch tas
+	else 
+    	echo "VTURB=$2" > tas
+	fi
+fi
+
+
+echo 'from synple import syn' > pltsp
+echo 'from matplotlib import pyplot as plt' >> pltsp
+echo 'xr=(3850.,3980.)' >> pltsp
+echo "xl, yl, zl = syn('${NAME}_MgCa.7',(3850.,3980.),lte=True)" >> pltsp
+echo "xn, yn, zn = syn('${NAME}_MgCa.7',(3850.,3980.),lte=False)" >> pltsp
+echo "plt.plot(xl,yl/zl,label='LTE')" >> pltsp
+echo "plt.plot(xn,yn/zn,label='NLTE')" >> pltsp
+echo "plt.legend()" >> pltsp
+echo "plt.show()" >> pltsp
+
+python3 pltsp
+
+
+rm *.log fort* tas 
+
+
